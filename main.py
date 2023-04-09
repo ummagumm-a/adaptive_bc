@@ -52,7 +52,10 @@ if __name__ == "__main__":
     parser.add_argument("--use_r_max", action='store_true') # if True, the return will normalized by the R_MAX * T
     # try to use exponential scheduling for penalty coefficient suggested by Beeson et al.
     parser.add_argument('--try_exp', action='store_true')
+    parser.add_argument('--alpha_start', type=float)
     parser.add_argument('--alpha_end', type=float)
+    # custom run name
+    parser.add_argument('--name', type=str, default="")
 
     args = parser.parse_args()
     # get task-specific args
@@ -89,7 +92,7 @@ if __name__ == "__main__":
 
 
     run_id = int(time.time())
-    run_name = f"{args.policy}_{args.env}_{args.seed}_{run_id}"
+    run_name = f"{args.policy}_{args.env}_{args.seed}_{run_id}_{args.name}"
 
     if args.save_model:
         if not os.path.exists(f"./models/{args.env}/pretrain"):
@@ -145,7 +148,7 @@ if __name__ == "__main__":
         policy.load(f"./models/{args.env}/pretrain/{policy_file}")
         print(f"------ Load policy model {policy_file} ------")
     else: # finetune
-        with wandb.init(project='adaptive_bc', group=args.env, job_type="pretrain", name=run_name):
+        with wandb.init(project='adaptive_bc', group=args.env + " " + args.name, job_type="pretrain", name=run_name):
             wandb.config.update(args)
             for i in tqdm.tqdm(range(args.pretrain_timesteps)):
                 batch = d4rl_replay_buffer.sample(args.batch_size)
@@ -170,12 +173,15 @@ if __name__ == "__main__":
     del d4rl_replay_buffer # to save memory
 
 
-    policy.alpha = args.alpha_finetune
+    if args.try_exp:
+        policy.alpha = args.alpha_start
+    else:
+        policy.alpha = args.alpha_finetune
     policy.pretrain = False # set flag of pretrain
  
 
     # finetune
-    with wandb.init(project='adaptive_bc', group=args.env, job_type="finetune", name=run_name):
+    with wandb.init(project='adaptive_bc', group=args.env + " " + args.name, job_type="finetune", name=run_name):
         wandb.config.update(args)
 
         # init last_R, current_R and target_R
@@ -188,12 +194,12 @@ if __name__ == "__main__":
         current_R = last_R
         target_R = 1.05
 
-        # 
+        # Alternative alpha scheduling taken from Beeson et al.
         if args.try_exp:
-            if args.alpha_start == 0 or args.finetune_timesteps == 0:
+            if args.alpha_start == 0 or args.max_timesteps == 0:
                 decay_rate = 0
             else:
-                decay_rate = np.exp(np.log(args.alpha_end / args.alpha_finetune) / args.max_timesteps)
+                decay_rate = np.exp(np.log(args.alpha_end / args.alpha_start) / args.max_timesteps)
 
         episode_return = 0.
         for t in tqdm.tqdm(range(args.max_timesteps)):
@@ -230,6 +236,7 @@ if __name__ == "__main__":
                 else:
                     current_R = env.get_normalized_score(episode_return)
 
+                # Alternative alpha scheduling taken from Beeson et al.
                 if args.try_exp:
                     policy.alpha *= decay_rate
                 else:

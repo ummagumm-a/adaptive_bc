@@ -1,8 +1,0 @@
-  0% 0/300000 [00:00<?, ?it/s]/workspace/pp/um_adaptive_bc/redq_bc.py:156: UserWarning: Using a target size (torch.Size([256, 1])) that is different to the input size (torch.Size([1, 10, 256, 1])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
-  critic_loss = F.mse_loss(current_Qs.unsqueeze(0), target_Q)
-/usr/local/lib/python3.8/dist-packages/d4rl/gym_mujoco/gym_envs.py:13: UserWarning: [33mThis environment is deprecated. Please use the most recent version of this environment.
-  offline_env.OfflineEnv.__init__(self, **kwargs)
-/usr/local/lib/python3.8/dist-packages/gym/spaces/box.py:73: UserWarning: [33mWARN: Box bound precision lowered by casting to float32
-  logger.warn(
-
-

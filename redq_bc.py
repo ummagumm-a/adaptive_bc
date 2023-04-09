@@ -5,8 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 class EnsembleLinear(nn.Module):
     def __init__(self, in_features, out_features, ensemble_size=7):
         super().__init__()
@@ -73,6 +71,7 @@ class REDQ_BC(object):
         state_dim,
         action_dim,
         max_action,
+        device,
         discount=0.99,
         tau=0.005,
         policy_noise=0.2,
@@ -105,6 +104,7 @@ class REDQ_BC(object):
         self.use_q_min = use_q_min
 
         self.total_it = 0
+        self.device = device
 
 
     def select_action(self, state):
@@ -113,9 +113,9 @@ class REDQ_BC(object):
             state = state.reshape(1, -1)
 
         if isinstance(state, np.ndarray):
-            state = torch.FloatTensor(state).to(device)
+            state = torch.FloatTensor(state).to(self.device)
         else:
-            state = state.to(device)
+            state = state.to(self.device)
 
         with torch.no_grad():
             action = self.actor(state)

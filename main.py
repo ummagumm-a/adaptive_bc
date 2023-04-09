@@ -31,6 +31,7 @@ if __name__ == "__main__":
     parser.add_argument("--save_model", action="store_true")                # Save model and optimizer parameters
     parser.add_argument("--load_policy_id", default="")                     # Load policy and optimizer with the given id
     parser.add_argument("--episode_length", default=1000, type=int)
+    parser.add_argument("--device", default="cuda", type=str)
     # TD3
     parser.add_argument("--expl_noise", default=0.1)                        # Std of Gaussian exploration noise
     parser.add_argument("--batch_size", default=256, type=int)              # Batch size for both actor and critic
@@ -112,7 +113,7 @@ if __name__ == "__main__":
 
 
     # init d4rl_buffer
-    d4rl_replay_buffer = utils.ReplayBuffer(state_dim, action_dim)
+    d4rl_replay_buffer = utils.ReplayBuffer(state_dim, action_dim, args.device)
     d4rl_replay_buffer.convert_D4RL(d4rl.qlearning_dataset(env)) # fill buffer
 
 
@@ -129,6 +130,7 @@ if __name__ == "__main__":
         "alpha": args.alpha,
         "use_q_min": args.use_q_min,
         "pretrain": True,
+        "device": args.device,
     }
     policy = redq_bc.REDQ_BC(**kwargs)
 
@@ -210,6 +212,7 @@ if __name__ == "__main__":
                         'finetune_training/alpha': policy.alpha})
 
             if done:
+                update_info.update({'train_episode_score': episode_return})
                 state, done = env.reset(), False
                 
                 # update current_R and the alpha of policy

@@ -1,0 +1,29 @@
+{
+    "os": "Linux-5.15.0-48-generic-x86_64-with-glibc2.29",
+    "python": "3.8.10",
+    "heartbeatAt": "2023-04-09T14:28:03.088362",
+    "startedAt": "2023-04-09T14:28:01.523110",
+    "docker": null,
+    "gpu": "Tesla V100S-PCIE-32GB",
+    "gpu_count": 8,
+    "cpu_count": 96,
+    "cuda": null,
+    "args": [
+        "--env=hopper-medium-expert-v0",
+        "--seed=1",
+        "--pretrain_timesteps=300000",
+        "--device=cuda:1"
+    ],
+    "state": "running",
+    "program": "main.py",
+    "codePath": "main.py",
+    "git": {
+        "remote": "git@github.com:ummagumm-a/adaptive_bc.git",
+        "commit": "d47226d4ffc9959ac0ed1337ddd7ebb787fc05e1"
+    },
+    "email": "siniy.vyacheslav@gmail.com",
+    "root": "/workspace/pp/um_adaptive_bc",
+    "host": "70a0b55b0218",
+    "username": "root",
+    "executable": "/usr/bin/python"
+}

@@ -1,0 +1,1 @@
+{"pretrain_training/": {"critic_loss": 0.048814807087183, "critic": 12.127445220947266}, "_timestamp": 1681050490, "_runtime": 9, "_step": 1249, "pretrain_evaluation/": {"d4rl": 1.2808142720833628, "evaluation": 21.412721577712478, "length": 23}}

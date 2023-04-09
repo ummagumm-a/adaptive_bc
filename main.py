@@ -50,6 +50,9 @@ if __name__ == "__main__":
     parser.add_argument('--Kd', type=float, default=0.0001)
     # ablation, avoid using the target_R
     parser.add_argument("--use_r_max", action='store_true') # if True, the return will normalized by the R_MAX * T
+    # try to use exponential scheduling for penalty coefficient suggested by Beeson et al.
+    parser.add_argument('--try_exp', action='store_true')
+    parser.add_argument('--alpha_end', type=float)
 
     args = parser.parse_args()
     # get task-specific args
@@ -162,7 +165,7 @@ if __name__ == "__main__":
     update_info, eval_info = {}, {}
 
     # distill dataset
-    buffer = utils.ReplayBuffer(state_dim, action_dim, max_size=int(args.max_timesteps))
+    buffer = utils.ReplayBuffer(state_dim, action_dim, args.device, max_size=int(args.max_timesteps))
     buffer.distill(d4rl.qlearning_dataset(env), args.env, args.sample_method, args.sample_ratio)
     del d4rl_replay_buffer # to save memory
 
@@ -185,6 +188,12 @@ if __name__ == "__main__":
         current_R = last_R
         target_R = 1.05
 
+        # 
+        if args.try_exp:
+            if args.alpha_start == 0 or args.finetune_timesteps == 0:
+                decay_rate = 0
+            else:
+                decay_rate = np.exp(np.log(args.alpha_end / args.alpha_finetune) / args.max_timesteps)
 
         episode_return = 0.
         for t in tqdm.tqdm(range(args.max_timesteps)):
@@ -221,10 +230,13 @@ if __name__ == "__main__":
                 else:
                     current_R = env.get_normalized_score(episode_return)
 
-                policy.alpha += episode_timesteps * (- args.Kp * (target_R - last_R)
-                                + args.Kd * max(0, last_R - current_R))
-                # clip the alpha value between 0.0 and 0.4
-                policy.alpha = max(0., min(policy.alpha, args.alpha_finetune))
+                if args.try_exp:
+                    policy.alpha *= decay_rate
+                else:
+                    policy.alpha += episode_timesteps * (- args.Kp * (target_R - last_R)
+                                    + args.Kd * max(0, last_R - current_R))
+                    # clip the alpha value between 0.0 and 0.4
+                    policy.alpha = max(0., min(policy.alpha, args.alpha_finetune))
 
                 # moving average
                 last_R = 0.05 * current_R + 0.95 * last_R

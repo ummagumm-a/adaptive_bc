@@ -226,6 +226,9 @@ if __name__ == "__main__":
             wandb.log({'finetune_training/': update_info,
                         'finetune_training/alpha': policy.alpha})
 
+            if args.try_exp:
+                policy.alpha *= decay_rate
+
             if done:
                 update_info.update({'train_episode_score': episode_return})
                 state, done = env.reset(), False
@@ -237,9 +240,7 @@ if __name__ == "__main__":
                     current_R = env.get_normalized_score(episode_return)
 
                 # Alternative alpha scheduling taken from Beeson et al.
-                if args.try_exp:
-                    policy.alpha *= decay_rate
-                else:
+                if not args.try_exp:
                     policy.alpha += episode_timesteps * (- args.Kp * (target_R - last_R)
                                     + args.Kd * max(0, last_R - current_R))
                     # clip the alpha value between 0.0 and 0.4
